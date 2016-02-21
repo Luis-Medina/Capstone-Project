@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">What\'s That?</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_camera">Camera</string>
+    <string name="action_short_clear">Clear</string>
+    <string name="action_short_delete">Delete</string>
+    <string name="action_short_done">Done</string>
+    <string name="action_short_all">All</string>
+    <string name="action_short_none">None</string>
+    <string name="action_clear_history">Clear History</string>
+    <string name="action_delete_files">Delete Photos</string>
+    <string name="wait_text">Please wait...</string>
+
+    <!--<string name="test_device_id">8BA9D11F039896BE687FC7A08B26E1E4</string>-->
+    <string name="test_device_id">9824495042DB4C9A4BE9597AA8C619C1</string>
+    <string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="banner_ad_unit_id1">ca-app-pub-3940256099942544/6300978112</string>
+    <string name="no_results">There are no results to show.</string>
+    <string name="no_history">No history.</string>
+    <string name="actionbar_title_results">Details</string>
+    <string name="actionbar_title_processing">Processing</string>
+    <string name="condensed_clear">Clr</string>
+    <string name="condensed_delete">Del</string>
+
+</resources>

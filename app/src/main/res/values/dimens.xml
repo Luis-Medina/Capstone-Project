@@ -1,0 +1,12 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+
+    <dimen name="first_result_text_size">10sp</dimen>
+    <dimen name="other_result_text_size">6sp</dimen>
+
+    <dimen name="margin_on_top_of_banner">50dp</dimen>
+    <dimen name="photo_list_item_checkbox_margin">50dp</dimen>
+</resources>

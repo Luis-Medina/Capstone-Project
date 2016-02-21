@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="132dp"
+    android:layout_marginBottom="5dp"
+    android:padding="16dp"
+    android:orientation="horizontal"
+    android:background="@drawable/list_item_selector">
+
+    <ImageView
+        android:id="@+id/photo_imageView"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:adjustViewBounds="false"
+        android:scaleType="fitCenter" />
+
+    <LinearLayout
+        android:id="@+id/detail_layout"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="8"
+        android:layout_marginLeft="10dp"
+        android:layout_marginStart="10dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/path_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="60dp"
+            android:paddingTop="15dp"
+            android:maxLines="2"
+            android:text="Photo path ddf dfsa fd sf dsf dsfa sdf sda fsdaf" />
+
+        <TextView
+            android:id="@+id/date_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="Photo date"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+
+    <CheckBox
+        android:id="@+id/select_checkBox"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:paddingRight="5dp"
+        android:paddingEnd="5dp" />
+
+
+</LinearLayout>
