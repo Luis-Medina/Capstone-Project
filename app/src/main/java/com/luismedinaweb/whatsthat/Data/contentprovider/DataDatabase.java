@@ -32,7 +32,6 @@ public class DataDatabase extends SQLiteOpenHelper {
                 + "UNIQUE(" + DataContract.PhotosColumns.PHOTO_DATE + ", "
                 + DataContract.PhotosColumns.PHOTO_PATH + ") )";
         sqLiteDatabase.execSQL(photosTable);
-        //Log.d("DD", vendorTable);
 
         String resultsTable = "CREATE TABLE " + Tables.RESULTS + "("
                 + DataContract.ResultsColumns.PHOTO_ID + " ID NOT NULL,"
@@ -41,35 +40,14 @@ public class DataDatabase extends SQLiteOpenHelper {
                 + "UNIQUE(" + DataContract.ResultsColumns.PHOTO_ID + ", "
                 + DataContract.ResultsColumns.RESULT_LABEL + ") )";
         sqLiteDatabase.execSQL(resultsTable);
-        //Log.d("DD", nodesTable);
 
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
-        int version = oldVersion;
-        if (version != DATABASE_VERSION) {
-            int upgradeTo = oldVersion + 1;
-            while (upgradeTo <= newVersion) {
-                switch (upgradeTo) {
-                    case 2:
-                        //db.execSQL(SQLiteSet.V5_ADD_LAST_CARD);
-                        break;
-                    case 3:
-                        //db.execSQL(SQLiteSet.V6_ADD_IMPORT_TYPE);
-                        break;
-                    case 4:
-                        //db.execSQL(SQLiteSet.V7_ADD_SHORT_FNAME);
-                        break;
-                }
-                upgradeTo++;
-            }
+        if (oldVersion != DATABASE_VERSION) {
             throw new SQLiteException("Database version mismatch!");
         }
-    }
-
-    public static void deleteDatabase(Context context) {
-        context.deleteDatabase(DATABASE_NAME);
     }
 
 }

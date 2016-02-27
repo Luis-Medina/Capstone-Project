@@ -22,10 +22,11 @@
             android:id="@+id/imageView"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="3"
+            android:layout_weight="4"
             android:adjustViewBounds="false"
             android:scaleType="fitCenter"
-            android:background="@color/fadedBackground" />
+            android:background="@color/fadedBackground"
+            android:contentDescription="@string/result_image_description" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -33,27 +34,33 @@
             android:layout_weight="4"
             android:orientation="vertical">
 
+            <!--<TextView-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="@string/results_label"-->
+            <!--android:textStyle="bold"-->
+            <!--android:padding="@dimen/results_label_padding"-->
+            <!--android:textSize="@dimen/results_label_text_size" />-->
+
             <TextView
+                android:id="@+id/firstResult_textView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Results:"
+                android:textSize="@dimen/first_result_text_size"
+                android:padding="@dimen/first_result_padding"
+                android:layout_marginTop="@dimen/first_result_margin"
+                android:layout_marginBottom="@dimen/first_result_margin"
                 android:textStyle="bold"
-                android:paddingLeft="10dp"
-                android:paddingStart="10dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="5dp"
-                android:textSize="18sp" />
+                android:gravity="center" />
 
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/recyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="fill_parent"
                 android:clipToPadding="false"
-                android:paddingLeft="16dp"
-                android:paddingStart="16dp"
-                android:paddingRight="16dp"
-                android:paddingEnd="16dp"
-                android:paddingBottom="20dp" />
+                android:padding="@dimen/result_recycler_view_padding"
+                android:scrollbars="vertical"
+                android:scrollbarAlwaysDrawVerticalTrack="true" />
         </LinearLayout>
 
 

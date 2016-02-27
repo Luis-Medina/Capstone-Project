@@ -4,9 +4,26 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
 
-    <dimen name="first_result_text_size">10sp</dimen>
-    <dimen name="other_result_text_size">6sp</dimen>
+    <dimen name="first_result_text_size">22sp</dimen>
 
-    <dimen name="margin_on_top_of_banner">50dp</dimen>
+    <dimen name="margin_on_top_of_ad_banner">50dp</dimen>
+    <dimen name="divider_width">5dp</dimen>
+
     <dimen name="photo_list_item_checkbox_margin">50dp</dimen>
+    <dimen name="photo_list_item_height">132dp</dimen>
+    <dimen name="photo_list_item_padding">16dp</dimen>
+    <dimen name="photo_list_item_image_height">100dp</dimen>
+    <dimen name="photos_list_item_date_margin">10dp</dimen>
+
+    <dimen name="progress_bar_height">100dp</dimen>
+
+    <dimen name="result_image_height">200dp</dimen>
+    <dimen name="results_label_padding">10dp</dimen>
+    <dimen name="results_label_text_size">18sp</dimen>
+    <dimen name="first_result_padding">5dp</dimen>
+    <dimen name="first_result_margin">15dp</dimen>
+    <dimen name="result_recycler_view_padding">16dp</dimen>
+    <dimen name="result_list_item_height">40dp</dimen>
+    <dimen name="result_list_item_padding">8dp</dimen>
+    <dimen name="result_list_item_header_padding">8dp</dimen>
 </resources>

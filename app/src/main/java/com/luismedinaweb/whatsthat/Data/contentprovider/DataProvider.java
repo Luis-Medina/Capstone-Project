@@ -80,6 +80,7 @@ public class DataProvider extends ContentProvider {
         }
         Cursor cursor = queryBuilder.query(db, projection, selection, selectionArgs, null, null, sortOrder);
         if (match == PHOTOS || match == PHOTOS_ID) {
+            if (getContext() != null)
             cursor.setNotificationUri(getContext().getContentResolver(), uri);
         }
         return cursor;
@@ -98,37 +99,11 @@ public class DataProvider extends ContentProvider {
         long recordId;
         try {
             recordId = db.insertWithOnConflict(tableName, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
-            getContext().getContentResolver().notifyChange(uri, null);
+            if (getContext() != null) getContext().getContentResolver().notifyChange(uri, null);
             return DataContract.DefaultTableClass.buildTableUri(tableName, String.valueOf(recordId));
         } catch (SQLiteException e) {
             throw e;
         }
-    }
-
-    public int bulkInsert(Uri uri, ContentValues[] values) {
-        final SQLiteDatabase db = mOpenHelper.getReadableDatabase();
-        final int match = sUriMatcher.match(uri);
-        final String tableName = getTable(match);
-        long recordId;
-        int recordCount = 0;
-        db.beginTransaction();
-        try {
-            for (ContentValues contentValues : values) {
-                try {
-                    recordId = db.insertWithOnConflict(tableName, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
-                    if (recordId >= 0) {
-                        recordCount++;
-                    }
-                } catch (SQLiteException e) {
-                    Log.e(TAG, e.getMessage());
-                }
-                db.yieldIfContendedSafely();
-            }
-            db.setTransactionSuccessful();
-        } finally {
-            db.endTransaction();
-        }
-        return recordCount;
     }
 
     @Override
@@ -160,11 +135,11 @@ public class DataProvider extends ContentProvider {
             case PHOTOS:
                 int deleted3 = 0;
                 try {
-                    int deleted = db.delete(getTable(match), null, null);
-                    int deleted2 = db.delete("SQLITE_SEQUENCE", "Name = ?", new String[]{getTable(PHOTOS)});
-                    deleted3 = db.delete(getTable(RESULTS), null, null);
-                    int deleted4 = deleted3 + 1;
-                    getContext().getContentResolver().notifyChange(uri, null);
+                    db.delete(getTable(match), null, null);
+                    db.delete("SQLITE_SEQUENCE", "Name = ?", new String[]{getTable(PHOTOS)});
+                    db.delete(getTable(RESULTS), null, null);
+                    if (getContext() != null)
+                        getContext().getContentResolver().notifyChange(uri, null);
                 } catch (SQLiteException ex) {
                     Log.e(TAG, ex.getMessage());
                 }
@@ -177,7 +152,7 @@ public class DataProvider extends ContentProvider {
                 selection = BaseColumns._ID + "=" + id
                         + (!TextUtils.isEmpty(selection) ? " AND (" + selection + ")" : "");
                 int deleted = db.delete(getTable(match), selection, selectionArgs);
-                getContext().getContentResolver().notifyChange(uri, null);
+                if (getContext() != null) getContext().getContentResolver().notifyChange(uri, null);
                 return deleted;
             default:
                 throw new IllegalArgumentException("Unknown Uri: " + uri);

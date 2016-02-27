@@ -10,6 +10,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -25,6 +26,7 @@ import com.luismedinaweb.whatsthat.Data.model.visionapi.BatchImageResponse;
 import com.luismedinaweb.whatsthat.Data.model.visionapi.EntityAnnotation;
 import com.luismedinaweb.whatsthat.Data.model.visionapi.Feature;
 import com.luismedinaweb.whatsthat.Data.model.visionapi.Image;
+import com.luismedinaweb.whatsthat.R;
 import com.luismedinaweb.whatsthat.Utility;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
@@ -47,6 +49,8 @@ public class TaskProcessFragment extends Fragment {
     private ProcessImageTask mTask;
     private boolean mTaskInProgress;
     private Context mContext;
+    private String API_KEY = "";
+    private String ENDPOINT_URL = "https://vision.googleapis.com/v1/images:annotate?key=";
 
 
     @Override
@@ -70,6 +74,12 @@ public class TaskProcessFragment extends Fragment {
         // Retain this fragment across configuration changes.
         setRetainInstance(true);
 
+        API_KEY = getString(R.string.API_KEY);
+
+        if (API_KEY.isEmpty()) {
+            Toast.makeText(getActivity(), "Invalid API KEY for Google Vision API. Place your key in API_KEY on strings.xml", Toast.LENGTH_LONG).show();
+        }
+
     }
 
     public void start(String photoPath) {
@@ -90,7 +100,6 @@ public class TaskProcessFragment extends Fragment {
 
     private class ProcessImageTask extends AsyncTask<String, Void, Photo> {
 
-        private static final String ENDPOINT_URL = "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyBsU6xvXtwDghaJD9WZnIzY_2DeaxN-xzM";
         private String encodedString;
         private String mPhotoPath = "";
         public static final long INVALID_PHOTO_ID = DatabaseDAL.INVALID_PHOTO_ID;
@@ -108,7 +117,7 @@ public class TaskProcessFragment extends Fragment {
 
         private Photo send(String path) {
             final OkHttpClient client = new OkHttpClient();
-            String url = ENDPOINT_URL;
+            String url = ENDPOINT_URL + API_KEY;
             final MediaType MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
 
             BatchImageRequest batchImageRequest = new BatchImageRequest();
@@ -202,8 +211,6 @@ public class TaskProcessFragment extends Fragment {
             BitmapFactory.Options bmOptions = new BitmapFactory.Options();
             bmOptions.inJustDecodeBounds = false;
             toUse = BitmapFactory.decodeFile(photoPath, bmOptions);
-            int originalSize = toUse.getByteCount();
-            Log.e("MAIN", "Size is " + originalSize);
 
             int photoW = bmOptions.outWidth;
             int photoH = bmOptions.outHeight;
@@ -218,9 +225,6 @@ public class TaskProcessFragment extends Fragment {
 
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             toUse.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-            originalSize = toUse.getByteCount();
-            Log.e("MAIN", "Size is " + originalSize);
-
 
             return stream.toByteArray();
 

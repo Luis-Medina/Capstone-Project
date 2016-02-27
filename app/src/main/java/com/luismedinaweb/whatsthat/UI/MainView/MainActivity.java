@@ -1,15 +1,18 @@
-package com.luismedinaweb.whatsthat.UI.HomeView;
+package com.luismedinaweb.whatsthat.UI.MainView;
 
+import android.Manifest;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -22,13 +25,13 @@ import android.widget.TextView;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.analytics.HitBuilders;
 import com.luismedinaweb.whatsthat.Data.contentprovider.DataContract;
 import com.luismedinaweb.whatsthat.Data.contentprovider.DatabaseDAL;
 import com.luismedinaweb.whatsthat.Data.model.base.Photo;
 import com.luismedinaweb.whatsthat.R;
 import com.luismedinaweb.whatsthat.UI.AbstractActivity;
 import com.luismedinaweb.whatsthat.UI.ProcessingView.ProcessingActivity;
-import com.luismedinaweb.whatsthat.UI.ProcessingView.TaskProcessFragment;
 import com.luismedinaweb.whatsthat.UI.ResultView.ResultFragment;
 import com.luismedinaweb.whatsthat.Utility;
 import com.squareup.picasso.Picasso;
@@ -41,26 +44,40 @@ import java.util.Date;
 public class MainActivity extends AbstractActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
-    public static final String KEY_PROCESSING_RESULT = "key_result";
-    //private static final String KEY_EDITING = "key_editing";
+    private static final String KEY_SELECTED_ID = "key_selected_id";
+    private static final String KEY_IS_EDITING = "key_editing";
+    public static final String ACTION_TAKE_PHOTO = "action_take_photo";
     private View mEmptyView;
-    //private View mHistoryLayout;
     private PhotosAdapter mAdapter;
     private RecyclerView mRecyclerView;
-    private TaskProcessFragment mTaskFragment;
-    private Toolbar mEditingToolbar;
-    private Menu mMenu;
     private boolean mEditing;
-    private long mSelectedId = -1;
+    private static final long DEFAULT_ID = -1;
+    private long mSelectedId = DEFAULT_ID;
+    private static final String[] mRequiredPermissions = new String[]{
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+    private static final int MY_PERMISSIONS_REQUEST = 11;
+    private View mTutorialView;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_view);
 
-//        if(savedInstanceState != null){
-//            mEditing = savedInstanceState.getBoolean(KEY_EDITING);
-//        }
+        if (savedInstanceState != null) {
+            mSelectedId = savedInstanceState.getLong(KEY_SELECTED_ID, DEFAULT_ID);
+            mEditing = savedInstanceState.getBoolean(KEY_IS_EDITING, false);
+        }
+
+        mTutorialView = findViewById(R.id.tutorialView);
+        mTutorialView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mPreferences.edit().putBoolean(KEY_TUTORIAL_SHOWN, true).apply();
+                mTutorialView.setVisibility(View.GONE);
+            }
+        });
 
         mEmptyView = findViewById(R.id.emptyView);
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
@@ -81,6 +98,30 @@ public class MainActivity extends AbstractActivity implements LoaderManager.Load
 
         initAdView();
 
+        checkPermissions();
+
+        Intent receivedIntent = getIntent();
+        if (receivedIntent != null && receivedIntent.getAction() != null) {
+            if (receivedIntent.getAction().equals(ACTION_TAKE_PHOTO)) {
+                takePhoto();
+            }
+        }
+
+    }
+
+    private void checkPermissions() {
+        ArrayList<String> permissionsToRequest = new ArrayList<>();
+        for (String permission : mRequiredPermissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(permission);
+            }
+        }
+
+        if (!permissionsToRequest.isEmpty()) {
+            ActivityCompat.requestPermissions(this,
+                    permissionsToRequest.toArray(new String[permissionsToRequest.size()]),
+                    MY_PERMISSIONS_REQUEST);
+        }
     }
 
     private void initAdView() {
@@ -92,15 +133,20 @@ public class MainActivity extends AbstractActivity implements LoaderManager.Load
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        if (intent != null) {
+            if (intent.getAction().equals(ACTION_TAKE_PHOTO)) {
+                takePhoto();
+            }
+        }
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == AbstractActivity.REQUEST_RETURN_RESULT && resultCode == RESULT_OK) {
             mSelectedId = data.getLongExtra(ProcessingActivity.KEY_PHOTO_ID, -1);
-            for (Photo photo : mAdapter.getPhotos()) {
-                if (photo.getId() == mSelectedId) {
-                    Log.e("MAIN", "Found photo to select with id " + mSelectedId);
-                    break;
-                }
-            }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
@@ -109,7 +155,6 @@ public class MainActivity extends AbstractActivity implements LoaderManager.Load
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        mMenu = menu;
         if (mEditing) {
             getMenuInflater().inflate(R.menu.menu_edit, menu);
             if (getSupportActionBar() != null) getSupportActionBar().setTitle("");
@@ -131,18 +176,22 @@ public class MainActivity extends AbstractActivity implements LoaderManager.Load
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_delete_files) {
+            sendEvent("Delete all files");
             deleteFiles(mAdapter.getPhotos());
             deselectSelectedItem();
             return true;
         } else if (id == R.id.action_clear_history) {
+            sendEvent("Clear all files");
             DatabaseDAL.clearDatabaseIntent(this);
             deselectSelectedItem();
             return true;
         } else if (id == R.id.action_edit_delete) {
+            sendEvent("Delete selected files");
             deleteFiles(mAdapter.getSelected());
             deselectSelectedItem();
             return true;
         } else if (id == R.id.action_edit_clear) {
+            sendEvent("Clear selected files");
             deselectSelectedItem();
             for (Photo photo : mAdapter.getSelected()) {
                 DatabaseDAL.deletePhotoIntent(this, photo);
@@ -161,6 +210,33 @@ public class MainActivity extends AbstractActivity implements LoaderManager.Load
             mAdapter.notifyDataSetChanged();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void sendEvent(String action) {
+        mTracker.send(new HitBuilders.EventBuilder()
+                .setCategory("Action")
+                .setAction(action)
+                .build());
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putLong(KEY_SELECTED_ID, mSelectedId);
+        outState.putBoolean(KEY_IS_EDITING, mEditing);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!Utility.TWO_PANE) {
+            mSelectedId = DEFAULT_ID;
+        }
+        if (!mPreferences.getBoolean(KEY_TUTORIAL_SHOWN, false)) {
+            mTutorialView.setVisibility(View.VISIBLE);
+        } else {
+            mTutorialView.setVisibility(View.GONE);
+        }
     }
 
     private void finishEditing() {
@@ -217,6 +293,8 @@ public class MainActivity extends AbstractActivity implements LoaderManager.Load
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         if (cursor != null) {
             ArrayList<Photo> photos = new ArrayList<>();
+            int index = 0;
+            int scrollPosition = 0;
             cursor.moveToPosition(-1);  //Reset the cursor in case we already looped through it.
             while (cursor.moveToNext()) {
                 Photo thisPhoto = new Photo();
@@ -224,9 +302,17 @@ public class MainActivity extends AbstractActivity implements LoaderManager.Load
                 thisPhoto.setDate(cursor.getLong(cursor.getColumnIndex(DataContract.Photos.PHOTO_DATE)));
                 thisPhoto.setPhotoPath(cursor.getString(cursor.getColumnIndex(DataContract.Photos.PHOTO_PATH)));
                 photos.add(thisPhoto);
+
+                if (thisPhoto.getId() == mSelectedId) {
+                    scrollPosition = index;
+                }
+
+                index++;
             }
             mAdapter.refresh(photos);
             setEmptyView(photos.isEmpty());
+            mRecyclerView.smoothScrollToPosition(scrollPosition);
+
         } else {
             setEmptyView(true);
         }
@@ -324,15 +410,14 @@ public class MainActivity extends AbstractActivity implements LoaderManager.Load
         public class PhotosViewHolder extends RecyclerView.ViewHolder {
 
             private ImageView mPhotoImageView;
-            private TextView mPhotoPathTextView;
             private TextView mPhotoDateTextView;
             private CheckBox mSelectCheckbox;
+            private SimpleDateFormat mSdf = new SimpleDateFormat("M/dd/yyyy h:mm:ss a");
 
             public PhotosViewHolder(View itemView) {
                 super(itemView);
 
                 mPhotoImageView = (ImageView) itemView.findViewById(R.id.photo_imageView);
-                mPhotoPathTextView = (TextView) itemView.findViewById(R.id.path_textView);
                 mPhotoDateTextView = (TextView) itemView.findViewById(R.id.date_textView);
                 mSelectCheckbox = (CheckBox) itemView.findViewById(R.id.select_checkBox);
 
@@ -344,13 +429,19 @@ public class MainActivity extends AbstractActivity implements LoaderManager.Load
                             .replace(R.id.fragment_container,
                                     ResultFragment.newInstance(photo))
                             .commit();
+
+                    mSelectedId = photo.getId();
+                    notifyItemChanged(mPreviouslySelectedRow);
+                    itemView.setSelected(true);
+                    mPreviouslySelectedRow = position;
+
                 } else {
+                    mSelectedId = photo.getId();
+                    notifyItemChanged(mPreviouslySelectedRow);
+                    itemView.setSelected(true);
+                    mPreviouslySelectedRow = position;
                     goToResults(photo);
                 }
-                mSelectedId = photo.getId();
-                notifyItemChanged(mPreviouslySelectedRow);
-                itemView.setSelected(true);
-                mPreviouslySelectedRow = position;
             }
 
             public void initialize(final Photo photo, final int position) {
@@ -358,17 +449,14 @@ public class MainActivity extends AbstractActivity implements LoaderManager.Load
 
                 Picasso.with(itemView.getContext())
                         .load(uri)
-                        .centerCrop()
                         .placeholder(android.R.drawable.ic_menu_gallery)
-                        .resize(mPhotoImageView.getLayoutParams().width, mPhotoImageView.getLayoutParams().height)
+                        .fit()
+                        .centerCrop()
                         .into(mPhotoImageView);
 
                 String fileName = uri.getLastPathSegment();
-                mPhotoPathTextView.setText(fileName);
-
                 Date date = Utility.getDateFromFileName(fileName);
-                SimpleDateFormat sdf = new SimpleDateFormat("M/dd/yyyy h:mm:ss a");
-                mPhotoDateTextView.setText(sdf.format(date));
+                mPhotoDateTextView.setText(mSdf.format(date));
 
                 itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -377,15 +465,17 @@ public class MainActivity extends AbstractActivity implements LoaderManager.Load
                     }
                 });
 
-                if (mSelectedId == photo.getId()) {
-                    if (Utility.TWO_PANE) {
+                if (Utility.TWO_PANE) {
+                    if (mSelectedId == photo.getId()) {
                         getFragmentManager().beginTransaction()
                                 .replace(R.id.fragment_container,
                                         ResultFragment.newInstance(photo))
                                 .commit();
+                        itemView.setSelected(true);
+                        mPreviouslySelectedRow = position;
+                    } else {
+                        itemView.setSelected(false);
                     }
-                    itemView.setSelected(true);
-                    mPreviouslySelectedRow = position;
                 } else {
                     itemView.setSelected(false);
                 }
@@ -394,6 +484,7 @@ public class MainActivity extends AbstractActivity implements LoaderManager.Load
                     @Override
                     public boolean onLongClick(View v) {
                         mEditing = true;
+                        mSelectedId = photo.getId();
                         invalidateOptionsMenu();
                         return true;
                     }

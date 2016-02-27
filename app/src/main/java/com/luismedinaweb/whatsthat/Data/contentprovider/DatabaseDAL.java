@@ -34,41 +34,6 @@ public class DatabaseDAL extends IntentService {
     public static final long INVALID_PHOTO_ID = -1;
 
 
-    public static ArrayList<Photo> getPhotos(Context context) {
-        ArrayList<Photo> toReturn = new ArrayList<>();
-        Cursor cursor = null;
-        try {
-            Uri uri = DataContract.Photos.CONTENT_URI;
-            String[] projection = new String[]{
-                    DataContract.Photos._ID,
-                    DataContract.Photos.PHOTO_DATE,
-                    DataContract.Photos.PHOTO_PATH
-            };
-
-            cursor = context.getContentResolver().query(uri, projection, null, null, null);
-            if (cursor != null) {
-                while (cursor.moveToNext()) {
-                    Photo thisPhoto = new Photo();
-                    thisPhoto.setId(cursor.getInt(cursor.getColumnIndex(DataContract.Photos._ID)));
-                    thisPhoto.setDate(cursor.getLong(cursor.getColumnIndex(DataContract.Photos.PHOTO_DATE)));
-                    thisPhoto.setPhotoPath(cursor.getString(cursor.getColumnIndex(DataContract.Photos.PHOTO_PATH)));
-
-                    //thisPhoto.setResults(getResults(context, thisPhoto.getId()));
-
-                    toReturn.add(thisPhoto);
-                }
-            }
-        } catch (SQLiteException e) {
-            Log.e(TAG, e.getMessage());
-        } catch (IllegalArgumentException e) {
-            Log.e(TAG, e.getMessage());
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-        return toReturn;
-    }
 
     public static ArrayList<Result> getResults(Context context, long id) {
         ArrayList<Result> toReturn = new ArrayList<>();
@@ -94,9 +59,7 @@ public class DatabaseDAL extends IntentService {
                     toReturn.add(thisResult);
                 }
             }
-        } catch (SQLiteException e) {
-            Log.e(TAG, e.getMessage());
-        } catch (IllegalArgumentException e) {
+        } catch (SQLiteException | IllegalArgumentException e) {
             Log.e(TAG, e.getMessage());
         } finally {
             if (cursor != null) {
@@ -122,9 +85,7 @@ public class DatabaseDAL extends IntentService {
                 addResult(context, result, photoId);
             }
 
-        } catch (SQLiteException e) {
-            Log.e(TAG, e.getMessage());
-        } catch (IllegalArgumentException e) {
+        } catch (SQLiteException | IllegalArgumentException e) {
             Log.e(TAG, e.getMessage());
         }
         return photoId;
@@ -132,7 +93,6 @@ public class DatabaseDAL extends IntentService {
 
     private static boolean addResult(Context context, Result result, long photoId) {
         boolean success = false;
-        Cursor cursor = null;
         try {
             Uri uri = DataContract.Results.CONTENT_URI;
             ContentValues contentValues = new ContentValues();
@@ -143,14 +103,8 @@ public class DatabaseDAL extends IntentService {
             context.getContentResolver().insert(uri, contentValues);
             Log.d(TAG, "INSERTED result " + result.getLabel() + " for photo " + photoId);
             success = true;
-        } catch (SQLiteException e) {
+        } catch (SQLiteException | IllegalArgumentException e) {
             Log.e(TAG, e.getMessage());
-        } catch (IllegalArgumentException e) {
-            Log.e(TAG, e.getMessage());
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
         }
         return success;
     }
@@ -165,16 +119,13 @@ public class DatabaseDAL extends IntentService {
                 Log.d(TAG, "deleted " + deleted + " photo with id " + photo.getId());
                 deleteResults(context, photo.getId());
             }
-        } catch (SQLiteException e) {
-            Log.e(TAG, e.getMessage());
-        } catch (IllegalArgumentException e) {
+        } catch (SQLiteException | IllegalArgumentException e) {
             Log.e(TAG, e.getMessage());
         }
         return photoId;
     }
 
     private static void deleteResults(Context context, long id) {
-        Cursor cursor = null;
         try {
             Uri uri = DataContract.Results.CONTENT_URI;
 
@@ -187,30 +138,11 @@ public class DatabaseDAL extends IntentService {
             }
         } catch (SQLiteException | IllegalArgumentException e) {
             Log.e(TAG, e.getMessage());
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
         }
     }
 
-
     private void clearDatabase(Context context) {
         context.getContentResolver().delete(DataContract.Photos.CONTENT_URI, null, null);
-    }
-
-
-    public static void getPhotosIntent(Context context) {
-        Intent intent = new Intent(context, DatabaseDAL.class);
-        intent.setAction(DatabaseDAL.GET_PHOTOS);
-        context.startService(intent);
-    }
-
-    public static void addPhotoIntent(Context context, Photo photo) {
-        Intent intent = new Intent(context, DatabaseDAL.class);
-        intent.putExtra(KEY_PHOTO, photo);
-        intent.setAction(DatabaseDAL.ADD_PHOTO);
-        context.startService(intent);
     }
 
     public static void clearDatabaseIntent(Context context) {
@@ -232,15 +164,6 @@ public class DatabaseDAL extends IntentService {
         Log.d(TAG, "Intent received " + intent.getAction());
         String action = intent.getAction();
         switch (action) {
-            case GET_PHOTOS:
-                getPhotos(this);
-                return;
-            case GET_RESULTS:
-                getResults(this, intent.getLongExtra(KEY_PHOTO_ID, 0));
-                return;
-            case ADD_PHOTO:
-                addPhoto(this, (Photo) intent.getSerializableExtra(KEY_PHOTO));
-                return;
             case DELETE_PHOTO:
                 deletePhoto(this, (Photo) intent.getSerializableExtra(KEY_PHOTO));
                 return;

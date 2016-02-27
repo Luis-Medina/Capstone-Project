@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
     android:color="?android:colorControlHighlight">
-
     <item>
+
         <selector>
+
             <item
                 android:drawable="@color/colorSelected"
                 android:state_pressed="false"
                 android:state_selected="true" />
+
+            <!-- State when a row is being pressed, but hasn't yet been activated (finger down) -->
+            <item android:state_pressed="true">
+                <ripple android:color="@color/colorSelected" />
+            </item>
 
             <!-- When the view is "activated".  In SINGLE_CHOICE_MODE, it flags the active row
                  of a ListView -->
@@ -19,6 +25,6 @@
             <item android:drawable="@android:color/transparent" />
 
         </selector>
-    </item>
 
+    </item>
 </ripple>

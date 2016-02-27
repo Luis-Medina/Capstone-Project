@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:ads="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -10,20 +9,19 @@
         android:layout_height="match_parent"
         android:baselineAligned="false"
         android:orientation="horizontal"
-        android:layout_marginBottom="@dimen/margin_on_top_of_banner">
+        android:layout_marginBottom="@dimen/margin_on_top_of_ad_banner">
 
         <FrameLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="4">
+            android:layout_width="@dimen/list_width"
+            android:layout_height="match_parent">
 
             <TextView
                 android:id="@+id/emptyView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginBottom="60dp"
+                android:layout_marginBottom="@dimen/margin_on_top_of_ad_banner"
                 android:gravity="center"
-                android:text="No history."
+                android:text="@string/no_history"
                 android:visibility="gone" />
 
             <android.support.v7.widget.RecyclerView
@@ -32,29 +30,62 @@
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
                 android:visibility="visible"
-                android:drawSelectorOnTop="false" />
+                android:drawSelectorOnTop="true" />
 
         </FrameLayout>
 
         <View
-            android:layout_width="5dp"
+            android:layout_width="@dimen/divider_width"
             android:layout_height="match_parent"
-            android:background="@color/fadedBackground" />
+            android:background="@color/adBackground" />
 
         <FrameLayout
             android:id="@+id/fragment_container"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="6" />
+            android:layout_width="fill_parent"
+            android:layout_height="match_parent" />
 
     </LinearLayout>
 
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adView"
-        android:layout_width="wrap_content"
+    <FrameLayout
+        android:id="@+id/tutorialView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/fadedBackground">
+
+        <TextView
+            android:layout_width="110dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginRight="80dp"
+            android:layout_marginEnd="80dp"
+            android:layout_marginTop="70dp"
+            android:text="@string/tutorial_take_photo"
+            android:textSize="18sp"
+            android:textColor="@android:color/white" />
+
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/tutorial_arrow"
+            android:layout_gravity="end"
+            android:contentDescription="@string/tutorial_content_description"
+            android:layout_marginRight="20dp"
+            android:layout_marginEnd="20dp" />
+
+    </FrameLayout>
+
+    <include
+        layout="@layout/ad_view"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:background="@color/fadedBackground"
-        ads:adSize="BANNER"
-        ads:adUnitId="@string/banner_ad_unit_id" />
+        android:layout_width="match_parent"
+        android:layout_gravity="bottom" />
+
+    <!--<com.google.android.gms.ads.AdView-->
+    <!--android:id="@+id/adView"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_gravity="bottom|center_horizontal"-->
+    <!--android:background="@color/fadedBackground"-->
+    <!--ads:adSize="BANNER"-->
+    <!--ads:adUnitId="@string/banner_ad_unit_id" />-->
 </FrameLayout>

@@ -49,18 +49,19 @@ public class ProcessingActivity extends AbstractActivity implements TaskProcessF
                     mTaskFragment.start(mPhotoPath);
                 }
             } else {
+                Toast.makeText(this, R.string.invalid_path, Toast.LENGTH_SHORT).show();
                 finish();
             }
 
         } else {
-            finish();
+            Toast.makeText(this, R.string.invalid_request, Toast.LENGTH_SHORT).show();
         }
     }
 
 
     @Override
     public void onCancelled() {
-        Toast.makeText(this, "Task cancelled!", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.task_cancelled, Toast.LENGTH_SHORT).show();
         finish();
     }
 
@@ -68,10 +69,10 @@ public class ProcessingActivity extends AbstractActivity implements TaskProcessF
     public void onPostExecute(Photo photo) {
         if (Utility.TWO_PANE) {
             if (photo == null) {
-                Toast.makeText(this, "Unable to process photo. Please try again.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.process_error, Toast.LENGTH_SHORT).show();
             } else {
                 Intent intent = new Intent();
-                intent.putExtra(KEY_PHOTO_ID, photo == null ? -1 : photo.getId());
+                intent.putExtra(KEY_PHOTO_ID, photo.getId());
                 setResult(RESULT_OK, intent);
             }
             finish();
@@ -93,7 +94,7 @@ public class ProcessingActivity extends AbstractActivity implements TaskProcessF
 
     private void createDialog() {
         mDialog = new AlertDialog.Builder(this)
-                .setTitle("Are you sure you want to cancel this task?")
+                .setTitle(R.string.cancel_confirmation)
                 .setCancelable(true)
                 .setPositiveButton("Yes",
                         new DialogInterface.OnClickListener() {

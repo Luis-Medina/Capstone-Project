@@ -1,23 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="40dp"
-    android:orientation="horizontal">
+    android:layout_height="wrap_content"
+    android:padding="@dimen/result_list_item_padding">
 
     <TextView
-        android:id="@+id/resultLabel"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="7"
-        android:textAllCaps="true"
-        android:text="Label" />
-
-    <TextView
-        android:id="@+id/resultScore"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="3"
-        android:gravity="end"
-        android:text="96.25" />
+        android:id="@+id/result_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
 </LinearLayout>

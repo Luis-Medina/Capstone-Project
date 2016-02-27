@@ -2,14 +2,19 @@ package com.luismedinaweb.whatsthat.UI;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
+import com.luismedinaweb.whatsthat.AnalyticsApplication;
 import com.luismedinaweb.whatsthat.Data.contentprovider.DatabaseDAL;
 import com.luismedinaweb.whatsthat.Data.model.base.Photo;
 import com.luismedinaweb.whatsthat.R;
@@ -30,6 +35,9 @@ public abstract class AbstractActivity extends AppCompatActivity {
     private String mCurrentPhotoPath;
     private static final int REQUEST_TAKE_PHOTO = 1;
     public static final int REQUEST_RETURN_RESULT = 2;
+    protected SharedPreferences mPreferences;
+    protected static final String KEY_TUTORIAL_SHOWN = "key_tutorial_shown";
+    protected Tracker mTracker;
 
 
     @Override
@@ -39,6 +47,12 @@ public abstract class AbstractActivity extends AppCompatActivity {
         if (savedInstanceState != null) {
             mCurrentPhotoPath = savedInstanceState.getString(KEY_PHOTO_PATH, "");
         }
+
+        // Obtain the shared Tracker instance.
+        AnalyticsApplication application = (AnalyticsApplication) getApplication();
+        mTracker = application.getDefaultTracker();
+
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     }
 
     protected void goToResults(Photo photo) {
@@ -50,20 +64,32 @@ public abstract class AbstractActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+
+        mTracker.setScreenName("ScreenView: " + getClass().getSimpleName());
+        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_camera) {
-            mCurrentPhotoPath = dispatchTakePictureIntent(this, REQUEST_TAKE_PHOTO);
+            mPreferences.edit().putBoolean(KEY_TUTORIAL_SHOWN, true).apply();
+            takePhoto();
         } else if (id == R.id.action_clear_history) {
             DatabaseDAL.clearDatabaseIntent(this);
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void takePhoto() {
+        mCurrentPhotoPath = dispatchTakePictureIntent(this);
     }
 
     @Override
@@ -80,7 +106,7 @@ public abstract class AbstractActivity extends AppCompatActivity {
     }
 
 
-    public static String dispatchTakePictureIntent(Activity activity, int requestCode) {
+    private String dispatchTakePictureIntent(Activity activity) {
         // Save a file: path for use with ACTION_VIEW intents
         String photoPath = null;
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -99,7 +125,7 @@ public abstract class AbstractActivity extends AppCompatActivity {
             if (photoFile != null) {
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT,
                         Uri.fromFile(photoFile));
-                activity.startActivityForResult(takePictureIntent, requestCode);
+                activity.startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
             }
         }
         return photoPath;

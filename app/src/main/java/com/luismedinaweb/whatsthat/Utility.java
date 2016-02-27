@@ -10,7 +10,6 @@ import java.util.Date;
 public class Utility {
 
     public static final String DATE_FORMAT = "yyyyMMdd_HHmmss";
-    private static final int REQUEST_TAKE_PHOTO = 1;
     public static boolean TWO_PANE;
 
 
@@ -28,30 +27,6 @@ public class Utility {
         }
         return new Date();
     }
-//    public static int rotateAngle(String photoPath){
-//        ExifInterface ei = null;
-//        int rotateAngle = 0;
-//        try {
-//            ei = new ExifInterface(photoPath);
-//
-//            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
-//
-//            switch(orientation) {
-//                case ExifInterface.ORIENTATION_ROTATE_90:
-//                    rotateAngle = 173;
-//                    break;
-//                case ExifInterface.ORIENTATION_ROTATE_180:
-//                    rotateAngle = 180;
-//                    break;
-//                case ExifInterface.ORIENTATION_ROTATE_270:
-//                    rotateAngle = 270;
-//                    break;
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        return 0;
-//    }
 
 
 }

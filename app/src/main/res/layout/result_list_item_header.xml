@@ -3,14 +3,12 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp">
+    android:paddingTop="@dimen/result_list_item_header_padding"
+    android:paddingBottom="@dimen/result_list_item_header_padding">
 
     <TextView
         android:id="@+id/result_text"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Some text" />
+        android:layout_height="wrap_content" />
 
 </LinearLayout>

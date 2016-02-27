@@ -1,8 +1,10 @@
 package com.luismedinaweb.whatsthat.UI.ResultView;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.graphics.Typeface;
@@ -15,21 +17,22 @@ import android.support.v7.widget.RecyclerView;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
+import com.luismedinaweb.whatsthat.AnalyticsApplication;
 import com.luismedinaweb.whatsthat.Data.contentprovider.DataContract;
 import com.luismedinaweb.whatsthat.Data.model.base.Photo;
 import com.luismedinaweb.whatsthat.Data.model.base.Result;
 import com.luismedinaweb.whatsthat.R;
 import com.squareup.picasso.Picasso;
 
+import java.io.File;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -40,17 +43,15 @@ import java.util.Locale;
 public class ResultFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String KEY_PHOTO = "key_photo";
-    //private String mPhotoPath;
-    private ArrayList<Result> mResults = new ArrayList<>();
     private ImageView mImageView;
     private RecyclerView mRecyclerView;
-    //private long mPhotoId;
     private ResultsAdapter mAdapter;
-    private AdView mAdView;
-    private AdRequest mAdRequest;
     private View mEmptyView;
     private View mResultView;
     private Photo mPhoto;
+    private TextView mFirstResultTextView;
+    private int REQUEST_CODE_SHOW_PICTURE = 11;
+    private Tracker mTracker;
 
     public ResultFragment() {
     }
@@ -84,11 +85,20 @@ public class ResultFragment extends Fragment implements LoaderManager.LoaderCall
             if (temp != null && temp instanceof Photo) {
                 mPhoto = (Photo) temp;
             }
-//            Object results = getArguments().getSerializable(KEY_RESULTS);
-//            if(results != null){
-//                mResults.addAll((ArrayList<EntityAnnotation>) results);
-//            }
+
         }
+
+        // Obtain the shared Tracker instance.
+        AnalyticsApplication application = (AnalyticsApplication) getActivity().getApplication();
+        mTracker = application.getDefaultTracker();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        mTracker.setScreenName("ScreenView: " + getClass().getSimpleName());
+        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
     }
 
     @Nullable
@@ -99,11 +109,19 @@ public class ResultFragment extends Fragment implements LoaderManager.LoaderCall
         mEmptyView = view.findViewById(R.id.emptyView);
         mResultView = view.findViewById(R.id.resultViewLayout);
         mImageView = (ImageView) view.findViewById(R.id.imageView);
+        mImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
+                intent.setDataAndType(Uri.fromFile(new File(mPhoto.getPhotoPath())), "image/*");
+                startActivity(intent);
+            }
+        });
+        mFirstResultTextView = (TextView) view.findViewById(R.id.firstResult_textView);
         mRecyclerView = (RecyclerView) view.findViewById(R.id.recyclerView);
         mAdapter = new ResultsAdapter(new ArrayList<Result>());
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mRecyclerView.setAdapter(mAdapter);
-
 
         if (mPhoto == null) {
             mResultView.setVisibility(View.GONE);
@@ -112,18 +130,12 @@ public class ResultFragment extends Fragment implements LoaderManager.LoaderCall
             mResultView.setVisibility(View.VISIBLE);
             mEmptyView.setVisibility(View.GONE);
 
-            view.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-                @Override
-                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                    view.removeOnLayoutChangeListener(this);
-                    Picasso.with(getActivity())
-                            .load("file:///" + mPhoto.getPhotoPath())
-                            .placeholder(android.R.drawable.ic_menu_gallery)
-                            .centerCrop()
-                            .resize(mImageView.getWidth(), mImageView.getHeight())
-                            .into(mImageView);
-                }
-            });
+            Picasso.with(getActivity())
+                    .load("file:///" + mPhoto.getPhotoPath())
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .fit()
+                    .centerCrop()
+                    .into(mImageView);
         }
 
         return view;
@@ -136,6 +148,12 @@ public class ResultFragment extends Fragment implements LoaderManager.LoaderCall
         if (mPhoto != null) getLoaderManager().initLoader(0, null, this);
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CODE_SHOW_PICTURE && resultCode == Activity.RESULT_OK) {
+
+        }
+    }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -166,12 +184,40 @@ public class ResultFragment extends Fragment implements LoaderManager.LoaderCall
                 results.add(thisResult);
             }
             mAdapter.refresh(results);
+
+            if (getActivity() != null) {
+                if (results.size() > 0) {
+                    mFirstResultTextView.setText(getResultText(results.get(0)));
+                } else {
+                    mFirstResultTextView.setText(getString(R.string.no_results));
+                }
+            }
         }
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         mAdapter.clear();
+    }
+
+    private SpannableStringBuilder getResultText(Result result) {
+        NumberFormat nf = NumberFormat.getPercentInstance(Locale.getDefault());
+        nf.setMaximumFractionDigits(2);
+        String score = nf.format(result.getScore());
+        SpannableStringBuilder stringBuilder = new SpannableStringBuilder();
+        stringBuilder.append("I'm ");
+        ForegroundColorSpan colorSpan = new ForegroundColorSpan(ContextCompat.getColor(
+                getActivity(), R.color.colorAccent));
+        int start = stringBuilder.length();
+        stringBuilder.append(score);
+        stringBuilder.setSpan(colorSpan, start, start + score.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        stringBuilder.append(" sure this is: ");
+        start = stringBuilder.length();
+        stringBuilder.append(result.getLabel());
+        ForegroundColorSpan colorSpan1 = new ForegroundColorSpan(ContextCompat.getColor(
+                getActivity(), R.color.colorPrimary));
+        stringBuilder.setSpan(colorSpan1, start, start + result.getLabel().length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return stringBuilder;
     }
 
 
@@ -188,7 +234,10 @@ public class ResultFragment extends Fragment implements LoaderManager.LoaderCall
 
             if (results != null) {
                 mResults.addAll(results);
-                if (!mResults.isEmpty()) mResults.add(1, new Result());
+                if (!mResults.isEmpty()) {
+                    mResults.remove(0);
+                    mResults.add(0, new Result());
+                }
 
             }
         }
@@ -197,7 +246,10 @@ public class ResultFragment extends Fragment implements LoaderManager.LoaderCall
             mResults.clear();
             if (results != null) {
                 mResults.addAll(results);
-                if (!mResults.isEmpty()) mResults.add(1, new Result());
+                if (!mResults.isEmpty()) {
+                    mResults.remove(0);
+                    mResults.add(0, new Result());
+                }
             }
 
             notifyDataSetChanged();
@@ -210,7 +262,7 @@ public class ResultFragment extends Fragment implements LoaderManager.LoaderCall
 
         @Override
         public int getItemViewType(int position) {
-            if (position == 1) {
+            if (position == 0) {
                 return HEADER_VIEW_TYPE;
             } else {
                 return ITEM_VIEW_TYPE;
@@ -225,11 +277,9 @@ public class ResultFragment extends Fragment implements LoaderManager.LoaderCall
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.result_list_item_header, parent, false);
                 return new ResultsHeaderViewHolder(view);
             } else {
-                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.result_list_item_combined, parent, false);
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.result_list_item, parent, false);
                 return new ResultsViewHolder(view);
             }
-
-
         }
 
         @Override
@@ -270,33 +320,7 @@ public class ResultFragment extends Fragment implements LoaderManager.LoaderCall
             }
 
             public void initialize(final Result result, int position) {
-                NumberFormat nf = NumberFormat.getPercentInstance(Locale.getDefault());
-                nf.setMaximumFractionDigits(2);
-                String score = nf.format(result.getScore());
-
-                SpannableStringBuilder stringBuilder = new SpannableStringBuilder();
-                stringBuilder.append("I'm ");
-                ForegroundColorSpan colorSpan = new ForegroundColorSpan(ContextCompat.getColor(
-                        itemView.getContext(), R.color.colorAccent));
-                int start = stringBuilder.length();
-                stringBuilder.append(score);
-                stringBuilder.setSpan(colorSpan, start, start + score.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                stringBuilder.append(" sure this is: ");
-                start = stringBuilder.length();
-                stringBuilder.append(result.getLabel());
-                ForegroundColorSpan colorSpan1 = new ForegroundColorSpan(ContextCompat.getColor(
-                        itemView.getContext(), R.color.colorPrimary));
-                stringBuilder.setSpan(colorSpan1, start, start + result.getLabel().length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                mResultLabelTextView.setText(stringBuilder);
-
-                if (position == 0) {
-                    mResultLabelTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
-                    //mResultLabelTextView.setTextSize(getResources().getDimension(R.dimen.first_result_text_size));
-                } else {
-                    mResultLabelTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-                    //mResultLabelTextView.setTextSize(getResources().getDimension(R.dimen.other_result_text_size));
-                }
-
+                mResultLabelTextView.setText(getResultText(result));
             }
         }
 
@@ -308,35 +332,15 @@ public class ResultFragment extends Fragment implements LoaderManager.LoaderCall
 
             @Override
             public void initialize(Result result, int position) {
-                if (getItemCount() == 0) {
-                    mResultLabelTextView.setText("That's all I got!");
+                if (getItemCount() > 1) {
+                    mResultLabelTextView.setText(R.string.more_than_one_result);
                 } else {
-                    mResultLabelTextView.setText("Here are some other guesses:");
+                    mResultLabelTextView.setText(R.string.only_one_result);
                 }
                 mResultLabelTextView.setTypeface(Typeface.DEFAULT_BOLD);
             }
         }
 
-
-        public class OldResultsViewHolder extends RecyclerView.ViewHolder {
-
-            private TextView mResultLabelTextView;
-            private TextView mResultScoreTextView;
-
-            public OldResultsViewHolder(View itemView) {
-                super(itemView);
-
-                mResultLabelTextView = (TextView) itemView.findViewById(R.id.resultLabel);
-                mResultScoreTextView = (TextView) itemView.findViewById(R.id.resultScore);
-            }
-
-            public void initialize(final Result result, int position) {
-                mResultLabelTextView.setText(result.getLabel());
-                NumberFormat nf = NumberFormat.getPercentInstance(Locale.getDefault());
-                nf.setMaximumFractionDigits(2);
-                mResultScoreTextView.setText(nf.format(result.getScore()));
-            }
-        }
     }
 
 }

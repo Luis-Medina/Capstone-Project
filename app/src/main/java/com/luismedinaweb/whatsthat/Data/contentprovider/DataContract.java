@@ -19,6 +19,14 @@ public class DataContract {
         String RESULT_SCORE = "score";
     }
 
+    interface PhotosWithResultsColumns {
+        String PHOTO_PATH = PhotosColumns.PHOTO_PATH;
+        String PHOTO_DATE = PhotosColumns.PHOTO_DATE;
+        String PHOTO_ID = ResultsColumns.PHOTO_ID;
+        String RESULT_LABEL = ResultsColumns.RESULT_LABEL;
+        String RESULT_SCORE = ResultsColumns.RESULT_SCORE;
+    }
+
 
     private static final String PATH_PHOTOS = "photos";
     private static final String PATH_RESULTS = "results";
@@ -59,8 +67,6 @@ public class DataContract {
 
     public static class Photos extends DefaultTableClass implements PhotosColumns, BaseColumns {
         public static final Uri CONTENT_URI =
-                BASE_CONTENT_URI.buildUpon().appendEncodedPath(PATH_PHOTOS).build();
-        public static final Uri CONTENT_URI_WITH_ID =
                 BASE_CONTENT_URI.buildUpon().appendEncodedPath(PATH_PHOTOS).build();
     }
 

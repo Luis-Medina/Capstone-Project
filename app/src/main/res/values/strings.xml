@@ -11,6 +11,10 @@
     <string name="action_delete_files">Delete Photos</string>
     <string name="wait_text">Please wait...</string>
 
+
+    <string name="API_KEY" translatable="false"></string>
+
+
     <!--<string name="test_device_id">8BA9D11F039896BE687FC7A08B26E1E4</string>-->
     <string name="test_device_id">9824495042DB4C9A4BE9597AA8C619C1</string>
     <string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
@@ -21,5 +25,19 @@
     <string name="actionbar_title_processing">Processing</string>
     <string name="condensed_clear">Clr</string>
     <string name="condensed_delete">Del</string>
+    <string name="all">All</string>
+    <string name="delete">Delete</string>
+    <string name="results_label">Results:</string>
+    <string name="result_image_description">Result image</string>
+    <string name="task_cancelled">Task cancelled!</string>
+    <string name="process_error">Unable to process photo. Please try again.</string>
+    <string name="cancel_confirmation">Are you sure you want to cancel this task?</string>
+    <string name="only_one_result">That\'s all I got!</string>
+    <string name="more_than_one_result">Here are some other guesses:</string>
+    <string name="invalid_path">Invalid photo path. Please try again.</string>
+    <string name="invalid_request">Invalid request. Please try again.</string>
+    <string name="tutorial_take_photo">Click here to take a photo!</string>
+    <string name="tutorial_content_description">tutorial arrow</string>
+
 
 </resources>
